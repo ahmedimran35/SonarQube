@@ -17,25 +17,25 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '18'
+          node-version: '16'
 
       - name: Install dependencies
+        run: npm ci
+
+      - name: Download logback
         run: |
-          npm ci
-          npm install logback@3.2.0
+          mkdir -p ./sonar-scanner-cli/lib
+          curl -L https://repo1.maven.org/maven2/ch/qos/logback/logback-classic/1.2.3/logback-classic-1.2.3.jar --output ./sonar-scanner-cli/lib/logback-classic-1.2.3.jar
 
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: |
-          mkdir -p ./sonar-scanner-cli/lib
-          cp ./node_modules/logback/lib/logback-classic-1.2.3.jar ./sonar-scanner-cli/lib
-          npx sonarqube-scanner
-            -Dsonar.projectKey=npm
-            -Dsonar.sources=.
-            -Dsonar.host.url=$SONAR_HOST_URL
-            -Dsonar.login=$SONAR_TOKEN
+        run: npx sonarqube-scanner
+          -Dsonar.projectKey=npm
+          -Dsonar.sources=.
+          -Dsonar.host.url=$SONAR_HOST_URL
+          -Dsonar.login=$SONAR_TOKEN
 
       - name: Upload coverage to SonarQube
         if: success()
