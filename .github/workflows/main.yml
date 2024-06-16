@@ -20,17 +20,22 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm install logback@3.2.0
 
       - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        run: npx sonarqube-scanner
-          -Dsonar.projectKey=npm
-          -Dsonar.sources=.
-          -Dsonar.host.url=$SONAR_HOST_URL
-          -Dsonar.login=$SONAR_TOKEN
+        run: |
+          mkdir -p ./sonar-scanner-cli/lib
+          cp ./node_modules/logback/lib/logback-classic-1.2.3.jar ./sonar-scanner-cli/lib
+          npx sonarqube-scanner
+            -Dsonar.projectKey=npm
+            -Dsonar.sources=.
+            -Dsonar.host.url=$SONAR_HOST_URL
+            -Dsonar.login=$SONAR_TOKEN
 
       - name: Upload coverage to SonarQube
         if: success()
@@ -39,7 +44,7 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
           npx sonarqube-scanner
-          -Dsonar.projectKey=npm
-          -Dsonar.sources=.
-          -Dsonar.host.url=$SONAR_HOST_URL
-          -Dsonar.login=$SONAR_TOKEN
+            -Dsonar.projectKey=npm
+            -Dsonar.sources=.
+            -Dsonar.host.url=$SONAR_HOST_URL
+            -Dsonar.login=$SONAR_TOKEN
