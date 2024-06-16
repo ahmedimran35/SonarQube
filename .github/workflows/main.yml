@@ -1,28 +1,45 @@
-name: Build
-on: push
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main  # Replace with your main branch name
+
 jobs:
   sonarqube:
-    name: SonarQube Scan
+    name: SonarQube Trigger
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
+      - name: Use Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: 12
+          node-version: '18'
 
       - name: Install dependencies
-        run: |
-          npm install
-          # Install Logback dependency
-          npm install logback
+        run: npm ci
 
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
+      - name: Run SonarQube analysis
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: npx sonarqube-scanner
+          -Dsonar.projectKey=npm
+          -Dsonar.sources=.
+          -Dsonar.host.url=$SONAR_HOST_URL
+          -Dsonar.login=$SONAR_TOKEN
+
+      - name: Upload coverage to SonarQube
+        if: success()
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          npx sonarqube-scanner
+          -Dsonar.projectKey=npm
+          -Dsonar.sources=.
+          -Dsonar.host.url=$SONAR_HOST_URL
+          -Dsonar.login=$SONAR_TOKEN
